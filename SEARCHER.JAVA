@@ -1,46 +1,58 @@
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.List;
+import com.google.gson.Gson; //THIS .JAR NEEDS TO BE LINKED TO LIBRARY
+							//RIGHT CLICK->BUILD PATH->CONFIGURE->LIBRARY->LINK JAR.
+public class TestGoogleSea {
 
-package javaScraping.SimpleScraper;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import java.net.*;
-import java.io.*;
-public class MenuScraper {
-public static void main(String[] args) {
-scrapeTopic("/new-england-gandhi-bot-double-ipa");
-}
-public static void scrapeTopic(String url){
-String html = getUrl("https://www.beermenus.com/beers"+url);
-Document doc = Jsoup.parse(html);
-String contentText = doc.select("#mw-content-text >p").first().text();
-System.out.println(contentText);
-}
-public static String getUrl(String url){
-URL urlObj = null;
-try{
-urlObj = new URL(url);
-}
-catch(MalformedURLException e){
-System.out.println("The url was malformed!");
-return "";
-}
-URLConnection urlCon = null;
-BufferedReader in = null;
-String outputText = "";
-try{
-urlCon = urlObj.openConnection();
-in = new BufferedReader(new
-InputStreamReader(urlCon.getInputStream()));
-String line = "";
-while((line = in.readLine()) != null){
-outputText += line;
-}
-in.close();
-}catch(IOException e){
-System.out.println("There was an error connecting to the URL");
-return "";
-}
-return outputText;
-}
+	public static void main(String[] args) throws IOException {
+
+		String address = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=";
+		String query = "sea hag + draft"; //OBVIOUSLY THE SEARCH TERMS
+		String charset = "UTF-8";
+
+		URL url = new URL(address + URLEncoder.encode(query, charset));
+		Reader reader = new InputStreamReader(url.openStream(), charset);
+		GoogleResults results = new Gson().fromJson(reader, GoogleResults.class);
+
+		int total = results.getResponseData().getResults().size();
+		System.out.println("total: "+total);
+
+		//THIS SHOWS RESPONSES AS TITLE AND URL
+		for(int i=0; i<=total-1; i++){
+			System.out.println("Title: " + results.getResponseData().getResults().get(i).getTitle());
+			System.out.println("URL: " + results.getResponseData().getResults().get(i).getUrl() + "\n");
+
+		}
+	}
 }
 
+
+class GoogleResults{
+
+   private ResponseData responseData;
+   public ResponseData getResponseData() { return responseData; }
+   public void setResponseData(ResponseData responseData) { this.responseData = responseData; }
+   public String toString() { return "ResponseData[" + responseData + "]"; }
+
+   static class ResponseData {
+       private List<Result> results;
+       public List<Result> getResults() { return results; }
+       public void setResults(List<Result> results) { this.results = results; }
+       public String toString() { return "Results[" + results + "]"; }
+   }
+
+   static class Result {
+       private String url;
+       private String title;
+       public String getUrl() { return url; }
+       public String getTitle() { return title; }
+       public void setUrl(String url) { this.url = url; }
+       public void setTitle(String title) { this.title = title; }
+       public String toString() { return "Result[url:" + url +",title:" + title + "]"; }
+   }
+}
